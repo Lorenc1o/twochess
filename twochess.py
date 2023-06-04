@@ -98,6 +98,14 @@ class Piece:
         dy = abs(end[1] - start[1])
         # Knight moves two squares in one direction and one in the other
         return (dx, dy) == (2, 1) or (dx, dy) == (1, 2)
+    
+    def check_for_check(self, board, team, king_pos):
+        for row in range(8):
+            for col in range(8):
+                piece = board[row][col]
+                if piece is not None and piece.team != team and piece.is_valid_move((row, col), king_pos, board):
+                    return True
+        return False
 
 
 class Board:
@@ -154,6 +162,29 @@ class Board:
 
                 return True
         return False
+    
+class Menu:
+    def __init__(self, root):
+        self.root = root
+        self.frame = tk.Frame(root)
+        self.frame.pack()
+
+        # Add a "New Game" button
+        self.new_game_button = tk.Button(self.frame, text="New Game", command=self.new_game)
+        self.new_game_button.pack()
+
+        # Add a "Quit" button
+        self.quit_button = tk.Button(self.frame, text="Quit", command=self.quit)
+        self.quit_button.pack()
+
+    def new_game(self):
+        # Start a new game
+        game = Game(self.root)
+        self.frame.destroy()
+
+    def quit(self):
+        # Quit the application
+        self.root.destroy()
 
 
 class Game:
@@ -164,6 +195,15 @@ class Game:
         self.board = Board()
         self.selected_piece_position = None
         self.canvas.bind("<Button-1>", self.on_square_clicked)
+        
+        # Press 'r' to reset the board
+        self.root.bind('r', self.reset_game)
+
+        # Press 'q' to quit
+        self.root.bind('q', self.quit)
+
+        # Press 'm' to go back to the menu
+        self.root.bind('m', self.go_to_menu)
 
         # Keep track of turns. 0: White Left, 1: Black Right, 2: White Right, 3: Black Left
         self.current_turn = 0
@@ -182,8 +222,12 @@ class Game:
                 image = image.resize((90, 90))  # Assuming square size is 100x100, adjust if needed
                 self.piece_images[f'{color}-{piece}_active'] = ImageTk.PhotoImage(image)
 
-        self.draw_board()
+                if piece == 'k':
+                    image = Image.open(f'images/{color}-{piece}_check.png')
+                    image = image.resize((90, 90))
+                    self.piece_images[f'{color}-{piece}_check'] = ImageTk.PhotoImage(image)
 
+        self.draw_board()
 
     def draw_board(self):
         self.canvas.delete("all")
@@ -204,34 +248,39 @@ class Game:
                 piece = self.board.board[i][j]
                 if piece:
                     # Draw the active pieces (those that can be moved)
-                    if self.current_turn == 0:
-                        if piece.team == 'white' and j <= 6:
-                            image = self.piece_images[f'{piece.team}-{piece.piece_type}_active']
+                    # Check the kings first for checks
+                    if piece.piece_type == 'k' and piece.check_for_check(self.board.board, piece.team, (i, j)):
+                            image = self.piece_images[f'{piece.team}-{piece.piece_type}_check']
                             self.canvas.create_image(x1+5, y1+5, anchor='nw', image=image)
-                        else:
-                            image = self.piece_images[f'{piece.team}-{piece.piece_type}']
-                            self.canvas.create_image(x1+5, y1+5, anchor='nw', image=image)
-                    elif self.current_turn == 1:
-                        if piece.team == 'black' and j <= 6:
-                            image = self.piece_images[f'{piece.team}-{piece.piece_type}_active']
-                            self.canvas.create_image(x1+5, y1+5, anchor='nw', image=image)
-                        else:
-                            image = self.piece_images[f'{piece.team}-{piece.piece_type}']
-                            self.canvas.create_image(x1+5, y1+5, anchor='nw', image=image)
-                    elif self.current_turn == 2:
-                        if piece.team == 'white' and j >= 6:
-                            image = self.piece_images[f'{piece.team}-{piece.piece_type}_active']
-                            self.canvas.create_image(x1+5, y1+5, anchor='nw', image=image)
-                        else:
-                            image = self.piece_images[f'{piece.team}-{piece.piece_type}']
-                            self.canvas.create_image(x1+5, y1+5, anchor='nw', image=image)
-                    elif self.current_turn == 3:
-                        if piece.team == 'black' and j >= 6:
-                            image = self.piece_images[f'{piece.team}-{piece.piece_type}_active']
-                            self.canvas.create_image(x1+5, y1+5, anchor='nw', image=image)
-                        else:
-                            image = self.piece_images[f'{piece.team}-{piece.piece_type}']
-                            self.canvas.create_image(x1+5, y1+5, anchor='nw', image=image)
+                    else:
+                        if self.current_turn == 0:
+                            if piece.team == 'white' and j <= 6:
+                                image = self.piece_images[f'{piece.team}-{piece.piece_type}_active']
+                                self.canvas.create_image(x1+5, y1+5, anchor='nw', image=image)
+                            else:
+                                image = self.piece_images[f'{piece.team}-{piece.piece_type}']
+                                self.canvas.create_image(x1+5, y1+5, anchor='nw', image=image)
+                        elif self.current_turn == 1:
+                            if piece.team == 'black' and j <= 6:
+                                image = self.piece_images[f'{piece.team}-{piece.piece_type}_active']
+                                self.canvas.create_image(x1+5, y1+5, anchor='nw', image=image)
+                            else:
+                                image = self.piece_images[f'{piece.team}-{piece.piece_type}']
+                                self.canvas.create_image(x1+5, y1+5, anchor='nw', image=image)
+                        elif self.current_turn == 2:
+                            if piece.team == 'white' and j >= 6:
+                                image = self.piece_images[f'{piece.team}-{piece.piece_type}_active']
+                                self.canvas.create_image(x1+5, y1+5, anchor='nw', image=image)
+                            else:
+                                image = self.piece_images[f'{piece.team}-{piece.piece_type}']
+                                self.canvas.create_image(x1+5, y1+5, anchor='nw', image=image)
+                        elif self.current_turn == 3:
+                            if piece.team == 'black' and j >= 6:
+                                image = self.piece_images[f'{piece.team}-{piece.piece_type}_active']
+                                self.canvas.create_image(x1+5, y1+5, anchor='nw', image=image)
+                            else:
+                                image = self.piece_images[f'{piece.team}-{piece.piece_type}']
+                                self.canvas.create_image(x1+5, y1+5, anchor='nw', image=image)
 
     def on_square_clicked(self, event):
         x = event.y // 100
@@ -258,6 +307,28 @@ class Game:
 
         self.draw_board()
 
-root = tk.Tk()
-game = Game(root)
-root.mainloop()
+    def reset_game(self, event):
+        self.board = Board()
+        self.current_turn = 0
+        self.draw_board()
+
+    def quit(self):
+        # Quit the application
+        self.root.destroy()
+
+    def go_to_menu(self, event):
+        # Go back to the menu
+        menu = Menu(self.root)
+        self.canvas.destroy()
+
+if __name__ == '__main__':
+    root = tk.Tk()
+    root.title("Chess")
+    root.geometry("1300x800")
+    root.resizable(False, False)
+
+    menu = Menu(root)
+    root.mainloop()
+
+
+
