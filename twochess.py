@@ -7,6 +7,9 @@ class Piece:
         self.team = team
         self.first_move = True  # To check if it's the pawn's first move
 
+    def can_move(self, start, end, board, last_double_step_move=None):
+        return self.is_valid_move(start, end, board, last_double_step_move) and not self.check_for_pin(board, self.team, start, end)
+
     def is_valid_move(self, start, end, board, last_double_step_move=None):
         if self.piece_type == 'p':
             return self.is_valid_pawn_move(start, end, board, last_double_step_move)
@@ -106,6 +109,65 @@ class Piece:
                 if piece is not None and piece.team != team and piece.is_valid_move((row, col), king_pos, board):
                     return True
         return False
+    
+    def check_for_checkmate(self, board, team, king_pos):
+        for row in range(8):
+            for col in range(8):
+                piece = board[row][col]
+                if piece is not None and piece.team == team:
+                    for i in range(8):
+                        for j in range(8):
+                            if piece.is_valid_move((row, col), (i, j), board):
+                                return False
+        return True
+    
+    def check_for_stalemate(self, board, team, king_pos):
+        for row in range(8):
+            for col in range(8):
+                piece = board[row][col]
+                if piece is not None and piece.team == team:
+                    for i in range(8):
+                        for j in range(8):
+                            if piece.is_valid_move((row, col), (i, j), board):
+                                return False
+        return True
+    
+    def check_for_pin(self, board, team, begin, end):
+        # Find the kings
+        king_pos = []
+        for row in range(8):
+            for col in range(8):
+                piece = board[row][col]
+                if piece is not None and piece.team == team and piece.piece_type == 'k':
+                    king_pos.append((row, col))
+        if len(king_pos) == 0:
+            return False
+        
+        # Check if the piece is pinned
+        # Simulate the move
+        temp = board[end[0]][end[1]]
+        board[end[0]][end[1]] = board[begin[0]][begin[1]]
+        board[begin[0]][begin[1]] = None
+
+        retval = False
+
+        # Check if the king is in check
+        for king in king_pos:
+            if self.check_for_check(board, team, king):
+                retval = True
+                break
+
+        # Undo the move
+        board[begin[0]][begin[1]] = board[end[0]][end[1]]
+        board[end[0]][end[1]] = temp
+
+        return retval
+    
+
+        
+        
+        
+
 
 
 class Board:
@@ -127,7 +189,7 @@ class Board:
     def move_piece(self, start, end):
         piece = self.board[start[0]][start[1]]
 
-        if piece is not None and piece.is_valid_move(start, end, self.board, self.last_double_step_move):
+        if piece is not None and piece.can_move(start, end, self.board, self.last_double_step_move):
                 # Capture the piece in the destination square, if any
                 # Check for en passant
                 if self.board[end[0]][end[1]] is None and piece.piece_type == 'p' and start[1] != end[1]:
