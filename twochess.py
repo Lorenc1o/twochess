@@ -9,7 +9,7 @@ class Piece:
 
     def is_valid_move(self, start, end, board, last_double_step_move=None):
         if self.piece_type == 'p':
-            return self.is_valid_pawn_move(start, end, board)
+            return self.is_valid_pawn_move(start, end, board, last_double_step_move)
         if self.piece_type == 'k':
             return self.is_valid_king_move(start, end, board)
         if self.piece_type == 'q':
@@ -121,7 +121,13 @@ class Board:
 
         if piece is not None and piece.is_valid_move(start, end, self.board, self.last_double_step_move):
                 # Capture the piece in the destination square, if any
-                captured_piece = self.board[end[0]][end[1]]
+                # Check for en passant
+                if self.board[end[0]][end[1]] is None and piece.piece_type == 'p' and start[1] != end[1]:
+                    print('En passant!')
+                    captured_piece = self.board[start[0]][end[1]]
+                    self.board[start[0]][end[1]] = None
+                else:
+                    captured_piece = self.board[end[0]][end[1]]
                 if captured_piece is not None:
                     print(f'{piece.team} {piece.piece_type} captured {captured_piece.team} {captured_piece.piece_type}!')
 
@@ -136,6 +142,7 @@ class Board:
                 # Check for double step move
                 if self.board[end[0]][end[1]].piece_type == 'p' and abs(start[0] - end[0]) == 2:
                     print('Double step move!')
+                    print(end)
                     self.last_double_step_move = end
                 else:
                     self.last_double_step_move = None
@@ -171,6 +178,10 @@ class Game:
                 image = image.resize((90, 90))  # Assuming square size is 100x100, adjust if needed
                 self.piece_images[f'{color}-{piece}'] = ImageTk.PhotoImage(image)
 
+                image = Image.open(f'images/{color}-{piece}_active.png')
+                image = image.resize((90, 90))  # Assuming square size is 100x100, adjust if needed
+                self.piece_images[f'{color}-{piece}_active'] = ImageTk.PhotoImage(image)
+
         self.draw_board()
 
 
@@ -192,8 +203,35 @@ class Game:
 
                 piece = self.board.board[i][j]
                 if piece:
-                    image = self.piece_images[f'{piece.team}-{piece.piece_type}']
-                    self.canvas.create_image(x1+5, y1+5, anchor='nw', image=image)
+                    # Draw the active pieces (those that can be moved)
+                    if self.current_turn == 0:
+                        if piece.team == 'white' and j <= 6:
+                            image = self.piece_images[f'{piece.team}-{piece.piece_type}_active']
+                            self.canvas.create_image(x1+5, y1+5, anchor='nw', image=image)
+                        else:
+                            image = self.piece_images[f'{piece.team}-{piece.piece_type}']
+                            self.canvas.create_image(x1+5, y1+5, anchor='nw', image=image)
+                    elif self.current_turn == 1:
+                        if piece.team == 'black' and j <= 6:
+                            image = self.piece_images[f'{piece.team}-{piece.piece_type}_active']
+                            self.canvas.create_image(x1+5, y1+5, anchor='nw', image=image)
+                        else:
+                            image = self.piece_images[f'{piece.team}-{piece.piece_type}']
+                            self.canvas.create_image(x1+5, y1+5, anchor='nw', image=image)
+                    elif self.current_turn == 2:
+                        if piece.team == 'white' and j >= 6:
+                            image = self.piece_images[f'{piece.team}-{piece.piece_type}_active']
+                            self.canvas.create_image(x1+5, y1+5, anchor='nw', image=image)
+                        else:
+                            image = self.piece_images[f'{piece.team}-{piece.piece_type}']
+                            self.canvas.create_image(x1+5, y1+5, anchor='nw', image=image)
+                    elif self.current_turn == 3:
+                        if piece.team == 'black' and j >= 6:
+                            image = self.piece_images[f'{piece.team}-{piece.piece_type}_active']
+                            self.canvas.create_image(x1+5, y1+5, anchor='nw', image=image)
+                        else:
+                            image = self.piece_images[f'{piece.team}-{piece.piece_type}']
+                            self.canvas.create_image(x1+5, y1+5, anchor='nw', image=image)
 
     def on_square_clicked(self, event):
         x = event.y // 100
@@ -203,13 +241,17 @@ class Game:
         if self.selected_piece_position:
             print(self.selected_piece_position)
             piece = self.board.board[self.selected_piece_position[0]][self.selected_piece_position[1]]
-            if ((self.current_turn == 0 and piece.team == 'white' and self.selected_piece_position[1] <= 6)
-                or (self.current_turn == 1 and piece.team == 'black' and self.selected_piece_position[1] <= 6)
-                or (self.current_turn == 2 and piece.team == 'white' and self.selected_piece_position[1] >= 6)
-                or (self.current_turn == 3 and piece.team == 'black' and self.selected_piece_position[1] >= 6)):
-                    if self.board.move_piece(self.selected_piece_position, (x, y)):
-                        self.current_turn = (self.current_turn + 1) % 4
-            self.selected_piece_position = None
+            if piece:
+                if ((self.current_turn == 0 and piece.team == 'white' and self.selected_piece_position[1] <= 6)
+                    or (self.current_turn == 1 and piece.team == 'black' and self.selected_piece_position[1] <= 6)
+                    or (self.current_turn == 2 and piece.team == 'white' and self.selected_piece_position[1] >= 6)
+                    or (self.current_turn == 3 and piece.team == 'black' and self.selected_piece_position[1] >= 6)):
+                        if self.board.move_piece(self.selected_piece_position, (x, y)):
+                            self.current_turn = (self.current_turn + 1) % 4
+                self.selected_piece_position = None
+            else:
+                print(f"Clicked on square ({x}, {y}), turn of the {'white' if self.current_turn in [0, 2] else 'black'} player")
+                self.selected_piece_position = (x, y)
         else:
             print(f"Clicked on square ({x}, {y}), turn of the {'white' if self.current_turn in [0, 2] else 'black'} player")
             self.selected_piece_position = (x, y)
