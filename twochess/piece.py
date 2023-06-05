@@ -4,8 +4,8 @@ class Piece:
         self.team = team
         self.first_move = True  # To check if it's the pawn's first move
 
-    def can_move(self, start, end, board, last_double_step_move=None):
-        return self.is_valid_move(start, end, board, last_double_step_move) and not self.check_for_pin(board, self.team, start, end)
+    def can_move(self, start, end, board, n_kings, last_double_step_move=None):
+        return self.is_valid_move(start, end, board, last_double_step_move) and not self.check_for_pin(board, self.team, start, end, n_kings)
 
     def is_valid_move(self, start, end, board, last_double_step_move=None):
         if self.piece_type == 'p':
@@ -101,7 +101,7 @@ class Piece:
     
     def check_for_check(self, board, team, king_pos):
         for row in range(8):
-            for col in range(8):
+            for col in range(13):
                 piece = board[row][col]
                 if piece is not None and piece.team != team and piece.is_valid_move((row, col), king_pos, board):
                     return True
@@ -109,7 +109,7 @@ class Piece:
     
     def check_for_checkmate(self, board, team, king_pos):
         for row in range(8):
-            for col in range(8):
+            for col in range(13):
                 piece = board[row][col]
                 if piece is not None and piece.team == team:
                     for i in range(8):
@@ -120,25 +120,26 @@ class Piece:
     
     def check_for_stalemate(self, board, team, king_pos):
         for row in range(8):
-            for col in range(8):
+            for col in range(13):
                 piece = board[row][col]
                 if piece is not None and piece.team == team:
                     for i in range(8):
-                        for j in range(8):
+                        for j in range(13):
                             if piece.is_valid_move((row, col), (i, j), board):
                                 return False
         return True
     
-    def check_for_pin(self, board, team, begin, end):
+    def check_for_pin(self, board, team, begin, end, n_kings):
+        if n_kings == 2:
+            return False
+
         # Find the kings
-        king_pos = []
+        king_pos = None
         for row in range(8):
-            for col in range(8):
+            for col in range(13):
                 piece = board[row][col]
                 if piece is not None and piece.team == team and piece.piece_type == 'k':
-                    king_pos.append((row, col))
-        if len(king_pos) == 0:
-            return False
+                    king_pos = (row, col)
         
         # Check if the piece is pinned
         # Simulate the move
@@ -146,13 +147,8 @@ class Piece:
         board[end[0]][end[1]] = board[begin[0]][begin[1]]
         board[begin[0]][begin[1]] = None
 
-        retval = False
-
         # Check if the king is in check
-        for king in king_pos:
-            if self.check_for_check(board, team, king):
-                retval = True
-                break
+        retval = self.check_for_check(board, team, king_pos)
 
         # Undo the move
         board[begin[0]][begin[1]] = board[end[0]][end[1]]

@@ -4,6 +4,7 @@ class Board:
     def __init__(self):
         self.board = self.create_board()
         self.last_double_step_move = None
+        self.n_kings = {'white': 2, 'black': 2}
 
     def create_board(self):
         board = [[None for _ in range(13)] for _ in range(8)]
@@ -19,7 +20,7 @@ class Board:
     def move_piece(self, start, end):
         piece = self.board[start[0]][start[1]]
 
-        if piece is not None and piece.can_move(start, end, self.board, self.last_double_step_move):
+        if piece is not None and piece.can_move(start, end, self.board, self.n_kings[piece.team],  self.last_double_step_move):
                 # Capture the piece in the destination square, if any
                 # Check for en passant
                 if self.board[end[0]][end[1]] is None and piece.piece_type == 'p' and start[1] != end[1]:
@@ -30,6 +31,10 @@ class Board:
                     captured_piece = self.board[end[0]][end[1]]
                 if captured_piece is not None:
                     print(f'{piece.team} {piece.piece_type} captured {captured_piece.team} {captured_piece.piece_type}!')
+                    if captured_piece.piece_type == 'k' and captured_piece.team == 'white':
+                        self.n_kings['white'] -= 1
+                    elif captured_piece.piece_type == 'k' and captured_piece.team == 'black':
+                        self.n_kings['black'] -= 1
 
                 # Move the piece
                 self.board[end[0]][end[1]] = piece
