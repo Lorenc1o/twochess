@@ -113,7 +113,7 @@ class Piece:
                 piece = board[row][col]
                 if piece is not None and piece.team == team:
                     for i in range(8):
-                        for j in range(8):
+                        for j in range(13):
                             if piece.is_valid_move((row, col), (i, j), board):
                                 return False
         return True
