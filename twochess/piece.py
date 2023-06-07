@@ -101,8 +101,8 @@ class Piece:
         dx = end[0] - start[0]
         dy = end[1] - start[1]
         if abs(dx) == abs(dy):  # moving diagonally
-            step_x = dx // abs(dx)
-            step_y = dy // abs(dy)
+            step_x = dx // max(1, abs(dx))
+            step_y = dy // max(1, abs(dy))
             for i in range(1, abs(dx)):  # dx and dy are same in magnitude
                 # Checking all intermediate squares for pieces
                 if board[start[0]+i*step_x][start[1]+i*step_y] is not None:
