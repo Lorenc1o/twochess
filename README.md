@@ -1,5 +1,7 @@
 # TwoChess
 
+![TwoChess banner](doc/banner.png)
+
 TwoChess is a Python-based chess application that allows for 2 vs 2 matches.
 This repository contains the source code for the application.
 

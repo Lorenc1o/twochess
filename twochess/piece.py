@@ -5,7 +5,7 @@ class Piece:
         self.first_move = True  # To check if it's the pawn's first move
 
     def can_move(self, start, end, board, n_kings, last_double_step_move=None):
-        return self.is_valid_move(start, end, board, last_double_step_move) and not self.check_for_pin(board, self.team, start, end, n_kings)
+        return self.is_valid_move(start,end, board, last_double_step_move) and not self.check_for_pin(board, self.team, start, end, n_kings)
 
     def is_valid_move(self, start, end, board, last_double_step_move=None):
         if self.piece_type == 'p':
@@ -21,6 +21,23 @@ class Piece:
         if self.piece_type == 'n':
             return self.is_valid_knight_move(start, end, board)
         return False
+    
+    # def is_valid_move(self, start, end, board, last_double_step_move=None):
+    #     valid_movements = {
+    #         'p': self.is_valid_pawn_move,
+    #         'k': self.is_valid_king_move,
+    #         'q': self.is_valid_queen_move,
+    #         'r': self.is_valid_rook_move,
+    #         'b': self.is_valid_bishop_move,
+    #         'n': self.is_valid_knight_move
+    #     }
+    #     validation_function = valid_movements.get(self.piece_type)
+    #     if validation_function:
+    #         if self.piece_type == 'p':
+    #             return validation_function(start, end, board, last_double_step_move)
+    #         else:
+    #             return validation_function(start, end, board)
+    #     return False
 
     def is_valid_pawn_move(self, start, end, board, last_double_step_move=None):
         direction = 1 if self.team == 'white' else -1
@@ -113,7 +130,7 @@ class Piece:
                 piece = board[row][col]
                 if piece is not None and piece.team == team:
                     for i in range(8):
-                        for j in range(8):
+                        for j in range(13):
                             if piece.is_valid_move((row, col), (i, j), board):
                                 return False
         return True

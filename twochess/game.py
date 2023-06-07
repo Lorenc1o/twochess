@@ -63,11 +63,11 @@ class Game:
                 y2 = y1 + 100
 
                 if (i + j) % 2 == 0:
-                    color = 'white'
+                    color = '#f0d9b5'
                 else:
-                    color = 'grey'
+                    color = '#b58863'
 
-                self.canvas.create_rectangle(x1, y1, x2, y2, fill=color)
+                self.canvas.create_rectangle(x1, y1, x2, y2, fill=color,width=0)
 
                 piece = self.board.board[i][j]
                 if piece:
