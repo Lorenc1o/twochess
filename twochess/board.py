@@ -60,3 +60,10 @@ class Board:
                 return True
         return False
 
+    def get_possible_moves(self, start):
+        piece_selected = self.board[start[0]][start[1]]
+        if piece_selected is not None:
+            possible_moves = [(i, j) for i in range(8) for j in range(13) 
+                                if piece_selected.is_valid_move(start, (i,j), self.board) and self.board[i][j] is None and (i,j) != start]
+            return possible_moves
+        return []
