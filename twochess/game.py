@@ -114,10 +114,10 @@ class Game:
             x2 = x1 + 100
             y2 = y1 + 100
             if (i + j) % 2 == 0:
-                color = 'white'
+                color = '#f0d9b5'
             else:
-                color = 'grey'
-            self.canvas.create_rectangle(x1, y1, x2, y2, fill=color)    
+                color = '#b58863'
+            self.canvas.create_rectangle(x1, y1, x2, y2, fill=color,width=0)    
             self.canvas.create_image(x1+35, y1+35, anchor='nw', image=image)
 
 
@@ -130,14 +130,15 @@ class Game:
             print(self.selected_piece_position)
             piece = self.board.board[self.selected_piece_position[0]][self.selected_piece_position[1]]
             if piece:
+                self.possible_moves = self.board.get_possible_moves((x,y))
                 if ((self.current_turn == 0 and piece.team == 'white' and self.selected_piece_position[1] <= 6)
                     or (self.current_turn == 1 and piece.team == 'black' and self.selected_piece_position[1] <= 6)
                     or (self.current_turn == 2 and piece.team == 'white' and self.selected_piece_position[1] >= 6)
                     or (self.current_turn == 3 and piece.team == 'black' and self.selected_piece_position[1] >= 6)):
                         if self.board.move_piece(self.selected_piece_position, (x, y)):
                             self.current_turn = (self.current_turn + 1) % 4
-                self.selected_piece_position = None
-                self.possible_moves = []
+                            self.possible_moves = []
+                self.selected_piece_position = (x,y)
             else:
                 print(f"Clicked on square ({x}, {y}), turn of the {'white' if self.current_turn in [0, 2] else 'black'} player")
                 self.possible_moves = self.board.get_possible_moves((x,y))
