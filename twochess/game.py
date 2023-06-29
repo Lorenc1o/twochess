@@ -3,11 +3,12 @@ from PIL import Image, ImageTk
 from .board import Board
 
 class Game:
-    def __init__(self, root):
+    def __init__(self, root, play_team):
         self.root = root
         self.canvas = tk.Canvas(root, width=1300, height=800, bg='white')
         self.canvas.pack()
-        self.board = Board()
+        top_team = 'white' if play_team == 'black' else 'black'
+        self.board = Board(top_team)
         self.selected_piece_position = None
         self.canvas.bind("<Button-1>", self.on_square_clicked)
         

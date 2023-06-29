@@ -6,6 +6,7 @@ def main():
     root.title("Chess")
     root.geometry("1300x800")
     root.resizable(False, False)
+    root.configure(background='#FFFFFF')
 
     menu = Menu(root)
     root.mainloop()

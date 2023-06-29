@@ -1,20 +1,26 @@
 from .piece import Piece
 
 class Board:
-    def __init__(self):
-        self.board = self.create_board()
+    def __init__(self, top_team='white'):
+        self.board = self.create_board(top_team)
         self.last_double_step_move = None
         self.n_kings = {'white': 2, 'black': 2}
 
-    def create_board(self):
+    def create_board(self, top_team):
         board = [[None for _ in range(13)] for _ in range(8)]
         setup = 'rnbknbqbnkbnr'
         teams = ['white', 'black']
+        top_index = 0 if top_team == 'white' else 7
         
         for team in teams:
             for i in range(13):
-                board[0 if team == 'white' else 7][i] = Piece(setup[i], team)
-                board[1 if team == 'white' else 6][i] = Piece('p', team)
+                board[top_index][i] = Piece(setup[i], team)
+
+                second_index = 1 if top_index == 0 else 6
+                board[second_index][i] = Piece('p', team)
+        
+            top_index = 7 - top_index  # Switch the top index for the other team
+        
         return board
 
     def move_piece(self, start, end):
