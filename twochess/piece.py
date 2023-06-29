@@ -1,8 +1,9 @@
 class Piece:
-    def __init__(self, piece_type, team):
+    def __init__(self, piece_type, team, top_team='white'):
         self.piece_type = piece_type
         self.team = team
         self.first_move = True  # To check if it's the pawn's first move
+        self.top_team = top_team
 
     def can_move(self, start, end, board, n_kings, last_double_step_move=None):
         return self.is_valid_move(start,end, board, last_double_step_move) and not self.check_for_pin(board, self.team, start, end, n_kings)
@@ -40,18 +41,33 @@ class Piece:
     #     return False
 
     def is_valid_pawn_move(self, start, end, board, last_double_step_move=None):
-        direction = 1 if self.team == 'white' else -1
-        dx = end[0] - start[0]
-        dy = end[1] - start[1]
-        # Check for normal move or capture
-        if dx == direction and (dy == 0 or abs(dy) == 1):
-            if dy == 0 and board[end[0]][end[1]] is None: 
+        # Determine the direction of movement based on the top team
+        if self.top_team == self.team:
+            direction = -1
+            start_row = 6
+            en_passant_row = 3
+        else:
+            direction = 1
+            start_row = 1
+            en_passant_row = 4
+
+        # Check if the move is a regular pawn move
+        if start[1] == end[1] and board[end[0]][end[1]] is None:
+            if start[0] + direction == end[0]:
                 return True
-            elif abs(dy) == 1 and ((board[end[0]][end[1]] is not None and board[end[0]][end[1]].team != self.team) or last_double_step_move == (end[0] - direction, end[1])):
+            if self.first_move and start[0] + 2 * direction == end[0] and board[start[0] + direction][start[1]] is None:
                 return True
-        # Check for double step move from start position
-        elif dx == 2*direction and dy == 0 and start[0] == (6 if direction == -1 else 1) and board[end[0]][end[1]] is None:
-            return True
+
+        # Check if the move is a capture
+        if abs(start[1] - end[1]) == 1 and board[end[0]][end[1]] is not None and board[end[0]][end[1]].team != self.team:
+            if start[0] + direction == end[0]:
+                return True
+
+        # Check if the move is an en passant capture
+        if last_double_step_move is not None and last_double_step_move[1] == end[1] and last_double_step_move[0] == en_passant_row:
+            if start[0] == en_passant_row + direction and end[0] == en_passant_row and abs(start[1] - end[1]) == 1:
+                return True
+
         return False
 
     def is_valid_king_move(self, start, end, board):
